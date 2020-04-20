@@ -1,8 +1,6 @@
 package main
 
 import (
-	"bytes"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"github.com/gorilla/mux"
@@ -37,7 +35,6 @@ func handleRoutes(){
 	r := mux.NewRouter()
 	r.HandleFunc("/healthz", healthCheck).Methods("GET")
 	r.HandleFunc("/getData", sendRequest).Methods("GET")
-	r.HandleFunc("/sendSms", sendSms).Methods("POST")
 	err := http.ListenAndServe(":8080", r)
 	if err != nil{
 		fmt.Println("some errors has found")
@@ -72,35 +69,15 @@ func sendRequest(w http.ResponseWriter, r *http.Request){
 	}
 }
 
-
-func sendSms(w http.ResponseWriter, r *http.Request) {
-	var content = SmsValue{
-		From:      "test sender",
-		Text:      "hello world",
-		To:        "5513982002638",
-	}
-	data, err := json.Marshal(content)
-	if err != nil {
-		fmt.Print("something is wrong")
-	}
-	req, err := http.NewRequest("POST", "https://rest.nexmo.com/sms/json", bytes.NewReader(data))
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Add("Accept", "application/json")
-	req.Header.Set("Authorization", "Basic "+base64.StdEncoding.EncodeToString([]byte(NEXMO_API_KEY+":"+NEXMO_API_SECRET)))
-
-	response, err := http.DefaultClient.Do(req)
-	fmt.Print(response)
-}
-
 func sendSmsFunction() error{
 	auth := nexmo.NewAuthSet()
 	auth.SetAPISecret(NEXMO_API_KEY, NEXMO_API_SECRET)
 
 	client := nexmo.NewClient(http.DefaultClient, auth)
 	smsReq := nexmo.SendSMSRequest {
-	From: "55139822002631",
-	To: "5513988300054",
-	Text: "papito é gay",
+	From: "5513981281982",
+	To: "5515988221053",
+	Text: "text from sms",
 	}
 
 	callR, _, err := client.SMS.SendSMS(smsReq)
