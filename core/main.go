@@ -4,9 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gorilla/mux"
+	"github.com/nexmo-community/nexmo-go"
 	"log"
 	"net/http"
-	"github.com/nexmo-community/nexmo-go"
+	"strconv"
 )
 
 const NEXMO_API_SECRET = "NEXMO_API_SECRET"
@@ -17,14 +18,6 @@ type BrazilCases struct{
  	NumberCases  int `json:"cases"`
  	Deaths	 	 int `json:"deaths"`
 	TodayCases 	 int `json:"todayCases"`
-}
-
-type SmsValue struct {
-	From string `json:"from"`
-	Text string `json:"text"`
-	To   string `json:"to"`
-	ApiKey  string `json:"apiKey"`
-	ApiSecret string `json:"apiSecret"`
 }
 
 func main(){
@@ -45,7 +38,6 @@ func healthCheck(w http.ResponseWriter, r *http.Request){
 	w.WriteHeader(http.StatusOK)
 }
 
-//TODO fazer o docker e subir no kubernets local.
 func sendRequest(w http.ResponseWriter, r *http.Request){
 	var brazilCases BrazilCases
 	resp, err := http.Get("https://coronavirus-19-api.herokuapp.com/countries/brazil")
@@ -62,33 +54,26 @@ func sendRequest(w http.ResponseWriter, r *http.Request){
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(data)
 
-	err = sendSmsFunction()
-
 	if err != nil {
 		fmt.Print(err)
 	}
-}
-
-func sendSmsFunction() error{
 	auth := nexmo.NewAuthSet()
 	auth.SetAPISecret(NEXMO_API_KEY, NEXMO_API_SECRET)
 
 	client := nexmo.NewClient(http.DefaultClient, auth)
 	smsReq := nexmo.SendSMSRequest {
-	From: "5513981281982",
-	To: "5515988221053",
-	Text: "text from sms",
+		From: "5513981281982",
+		To:   "5513982002638",
+		Text: "Country:" + brazilCases.Country + "Cases:" + strconv.Itoa(brazilCases.NumberCases) + "Deaths: " + strconv.Itoa(brazilCases.Deaths) + "TodayCases: " + strconv.Itoa(brazilCases.TodayCases),
 	}
 
 	callR, _, err := client.SMS.SendSMS(smsReq)
 
 	if err != nil {
-	log.Fatal(err)
+		log.Fatal(err)
 	}
 
 	fmt.Println("Status:", callR.Messages[0].Status)
 	fmt.Print(callR)
-
-	return nil
 }
 
