@@ -28,6 +28,7 @@ func handleRoutes(){
 	r := mux.NewRouter()
 	r.HandleFunc("/healthz", healthCheck).Methods("GET")
 	r.HandleFunc("/getData", sendRequest).Methods("GET")
+
 	err := http.ListenAndServe(":8080", r)
 	if err != nil{
 		fmt.Println("some errors has found")
@@ -76,4 +77,3 @@ func sendRequest(w http.ResponseWriter, r *http.Request){
 	fmt.Println("Status:", callR.Messages[0].Status)
 	fmt.Print(callR)
 }
-
