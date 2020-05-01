@@ -4,76 +4,87 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gorilla/mux"
+	"github.com/henryhiraki22/covid-api/core/domain"
 	"github.com/nexmo-community/nexmo-go"
+	_"github.com/nexmo-community/nexmo-go"
 	"log"
 	"net/http"
 	"strconv"
+	_"strconv"
+
 )
 
 const NEXMO_API_SECRET = "NEXMO_API_SECRET"
 const NEXMO_API_KEY = "NEXMO_API_KEY"
 
-type BrazilCases struct{
- 	Country      string `json:"country"`
- 	NumberCases  int `json:"cases"`
- 	Deaths	 	 int `json:"deaths"`
-	TodayCases 	 int `json:"todayCases"`
-}
-
 func main(){
-	handleRoutes()
+	err := handleRoutes()
+	if err != nil{
+		fmt.Println(err.Error())
+	}
 }
-
-func handleRoutes(){
+func handleRoutes() error{
 	r := mux.NewRouter()
 	r.HandleFunc("/healthz", healthCheck).Methods("GET")
-	r.HandleFunc("/getData", sendRequest).Methods("GET")
-
+	r.HandleFunc("/sendCases", sendCases).Methods("GET")
+	r.HandleFunc("/sendSms", sendSms)
 	err := http.ListenAndServe(":8080", r)
 	if err != nil{
 		fmt.Println("some errors has found")
 	}
+	return nil
 }
 
 func healthCheck(w http.ResponseWriter, r *http.Request){
 	w.WriteHeader(http.StatusOK)
 }
 
-func sendRequest(w http.ResponseWriter, r *http.Request){
-	var brazilCases BrazilCases
+func getData() []byte{
+	var brazilCases domain.BrazilCases
 	resp, err := http.Get("https://coronavirus-19-api.herokuapp.com/countries/brazil")
 	if err != nil {
 		fmt.Print(err.Error())
 	}
-	if err != nil{
+	if err != nil {
 		fmt.Printf("something is wrong")
 	}
 	if err := json.NewDecoder(resp.Body).Decode(&brazilCases); err != nil {
 		log.Println(err)
 	}
+	fmt.Println(resp.Body)
 	data, err := json.Marshal(brazilCases)
+	return data
+}
+
+func sendCases(w http.ResponseWriter, r *http.Request){
+	request := getData()
 	w.Header().Set("Content-Type", "application/json")
-	w.Write(data)
+	w.Write(request)
+}
 
-	if err != nil {
-		fmt.Print(err)
-	}
-	auth := nexmo.NewAuthSet()
-	auth.SetAPISecret(NEXMO_API_KEY, NEXMO_API_SECRET)
+func sendSms(w http.ResponseWriter, r* http.Request){
+		var cases domain.BrazilCases
+		reqCases := getData()
 
-	client := nexmo.NewClient(http.DefaultClient, auth)
-	smsReq := nexmo.SendSMSRequest {
-		From: "5513981281982",
-		To:   "5513982002638",
-		Text: "Country:" + brazilCases.Country + "Cases:" + strconv.Itoa(brazilCases.NumberCases) + "Deaths: " + strconv.Itoa(brazilCases.Deaths) + "TodayCases: " + strconv.Itoa(brazilCases.TodayCases),
-	}
+		err := json.Unmarshal(reqCases, &cases)
 
-	callR, _, err := client.SMS.SendSMS(smsReq)
+		auth := nexmo.NewAuthSet()
+		auth.SetAPISecret(NEXMO_API_KEY, NEXMO_API_SECRET)
 
-	if err != nil {
-		log.Fatal(err)
-	}
+		client := nexmo.NewClient(http.DefaultClient, auth)
+		smsReq := nexmo.SendSMSRequest {
+			From: "5513981281982",
+			To:   "5513982002638",
+			Text: "Country:" + cases.Country + "Cases:" + strconv.Itoa(cases.NumberCases) + "Deaths: " + strconv.Itoa(cases.Deaths) + "TodayCases: " + strconv.Itoa(cases.TodayCases),
+		}
 
-	fmt.Println("Status:", callR.Messages[0].Status)
-	fmt.Print(callR)
+		callR, _, err := client.SMS.SendSMS(smsReq)
+
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		fmt.Println("Status:", callR.Messages[0].Status)
+		fmt.Print(callR)
+
 }
