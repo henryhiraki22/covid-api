@@ -19,6 +19,6 @@ WORKDIR /dist
 
 RUN cp /build/main .
 
-EXPOSE 8030
+EXPOSE 8080
 
 CMD ["/dist/main"]
