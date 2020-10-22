@@ -73,8 +73,8 @@ func sendSms(w http.ResponseWriter, r* http.Request){
 
 		client := nexmo.NewClient(http.DefaultClient, auth)
 		smsReq := nexmo.SendSMSRequest {
-			From: "5513981281982",
-			To:   "5513982002638",
+			From: "",
+			To:   "",
 			Text: "Country:" + cases.Country + "Cases:" + strconv.Itoa(cases.NumberCases) + "Deaths: " + strconv.Itoa(cases.Deaths) + "TodayCases: " + strconv.Itoa(cases.TodayCases),
 		}
 
