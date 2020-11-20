@@ -6,3 +6,6 @@ type BrazilCases struct{
 	Deaths	 	 int `json:"deaths"`
 	TodayCases 	 int `json:"todayCases"`
 }
+
+type Test struct{
+}
